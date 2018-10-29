@@ -28,7 +28,7 @@
 // with the numerals 0 or 1).
 package base56 // import "toolman.org/encoding/base56"
 
-import "fmt"
+import "errors"
 
 var chars = []byte("0123456789ABCEFGHJKLMNPRSTUVWXYZabcdefghjklmnpqrstuvwxyz")
 var srahc = map[rune]uint64{}
@@ -39,11 +39,13 @@ func init() {
 	}
 }
 
+var ErrNotBase56 = errors.New("invalid base56 value")
+
 // Decode takes a valid, base56 string -- as returned by Encode -- and returns
-// its uint64 value, or zero and an error if the base56 string is invalid.
+// its uint64 value, or zero and ErrNotBase56 if the base56 string is invalid.
 // Valid base56 values are composed of digits in the range
-// [0-9ABCE-HJ-NPR-Za-hj-np-z] (which is all ASCII numerals, upper and lower
-// case letters except for [DIOQio])
+// [0-9ABCE-HJ-NPR-Za-hj-np-z] -- which is the numerals 0 through 9 plus all
+// upper and lower case ASCII letters except for [DIOQio].
 func Decode(s string) (uint64, error) {
 	var v uint64
 	p := uint64(1)
@@ -52,7 +54,7 @@ func Decode(s string) (uint64, error) {
 		r := rune(s[i])
 		iv, ok := srahc[r]
 		if !ok {
-			return 0, fmt.Errorf("invalid base56 digit: %c", r)
+			return 0, ErrNotBase56
 		}
 
 		v += iv * p
