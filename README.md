@@ -1,4 +1,5 @@
 
+[![GoDoc](https://godoc.org/toolman.org/encoding/base56?status.svg)](https://godoc.org/toolman.org/encoding/base56)  [![Go Report Card](https://goreportcard.com/badge/toolman.org/encoding/base56)](https://goreportcard.com/report/toolman.org/encoding/base56) [![Build Status](https://travis-ci.org/tep/encoding-base56.svg?branch=master)](https://travis-ci.org/tep/encoding-base56)
 
 # base56
 `import "toolman.org/encoding/base56"`
