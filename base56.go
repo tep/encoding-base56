@@ -39,6 +39,7 @@ func init() {
 	}
 }
 
+// ErrNotBase56 is returned by Decode if it is given an invalid base56 value.
 var ErrNotBase56 = errors.New("invalid base56 value")
 
 // Decode takes a valid, base56 string -- as returned by Encode -- and returns
