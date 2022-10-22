@@ -1,41 +1,61 @@
 package base56
 
 import (
-	"strconv"
+	"fmt"
 	"testing"
 )
 
-func TestEncode(t *testing.T) {
-	for _, tc := range []*encodeTestcase{{0, ""}, {1, "1"}, {100, "1n"}, {1540840132, "2nfvKM"}} {
-		t.Run(strconv.Itoa(int(tc.in)), tc.test)
+func TestEncodeDecode(t *testing.T) {
+	var cases []ecTestcase
+	cases = append(cases, mkTestcases(0, "", "", "")...)
+	cases = append(cases, mkTestcases(1, "1", "3", "3")...)
+	cases = append(cases, mkTestcases(100, "1n", "3N", "3n")...)
+	cases = append(cases, mkTestcases(1540840132, "2nfvKM", "4NFVkn", "4nfvLN")...)
+
+	for _, tc := range cases {
+		t.Run("Enc:"+tc.name(), tc.testEncode)
+		t.Run("Dec:"+tc.name(), tc.testDecode)
 	}
 }
 
-type encodeTestcase struct {
-	in   uint64
-	want string
-}
-
-func (tc *encodeTestcase) test(t *testing.T) {
-	if got := Encode(tc.in); got != tc.want {
-		t.Errorf("Encode(%d) := %q; Wanted %q", tc.in, got, tc.want)
+func (tc *ecTestcase) testEncode(t *testing.T) {
+	if got := tc.enc.Encode(tc.num); got != tc.str {
+		t.Errorf("Encode(%d) := %q; Wanted %q", tc.num, got, tc.str)
 	}
 }
 
-func TestDecode(t *testing.T) {
-	for _, tc := range []*decodeTestcase{{"", 0, nil}, {"1", 1, nil}, {"1n", 100, nil}, {"2nfvKM", 1540840132, nil}, {"NoGood", 0, ErrNotBase56}} {
-		t.Run(tc.in, tc.test)
+func (tc *ecTestcase) testDecode(t *testing.T) {
+	if got, err := tc.enc.Decode(tc.str); err != nil || got != tc.num {
+		t.Errorf("Encode(%q) := (%d, %v); Wanted (%d, nil)", tc.str, got, err, tc.num)
 	}
 }
 
-type decodeTestcase struct {
-	in   string
-	want uint64
-	err  error
+type ecTestcase struct {
+	enc *Encoding
+	num uint64
+	str string
 }
 
-func (tc *decodeTestcase) test(t *testing.T) {
-	if got, err := Decode(tc.in); got != tc.want || err != tc.err {
-		t.Errorf("Decode(%q) := (%d, %v); Wanted (%d, %v)", tc.in, got, err, tc.want, tc.err)
+func (tc *ecTestcase) name() string {
+	var n string
+	switch tc.enc {
+	case Std:
+		n = "Std"
+	case Alt:
+		n = "Alt"
+	case Py3:
+		n = "Py3"
+	default:
+		n = "<unknown>"
+	}
+
+	return fmt.Sprintf("%s:%d", n, tc.num)
+}
+
+func mkTestcases(i uint64, std, alt, py3 string) []ecTestcase {
+	return []ecTestcase{
+		{Std, i, std},
+		{Alt, i, alt},
+		{Py3, i, py3},
 	}
 }

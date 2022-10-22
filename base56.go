@@ -1,5 +1,5 @@
 //
-// Copyright 2018 Timothy E. Peoples
+// Copyright 2022 Timothy E. Peoples
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -23,37 +23,96 @@
 // Package base56 provides functions for encoding/decoding uint64 values as
 // short, easily digestible, base56 strings.
 //
-// The set of 56 digits are the numerals 0 - 9 plus all upper and lower case
-// (ASCII) characters except for [DIOQio] (each of which may be easily confused
-// with the numerals 0 or 1).
+// For compatibility with other implementions, this package supports three
+// separate and distinct base56 character sets through the package level,
+// Encoding variables Std, Alt and Py3. Each of these Encodings leverage only
+// 7-bit clean (ASCII) characters.
+//
+// The Std Encoding employs the original character set used by this package and
+// is composed of the numerals 0-9 followed by all upper case characters except
+// for 'D' (0x44), 'I' (0x49), 'O' (0x4f), and 'Q' (0x51) and then all lower
+// case characters except for 'i' (0x69) and 'o' (0x6f).
+//
+// The Alt Encoding is compatible with PHP and Java implementations and is
+// defined as the numerals 2-9 followed by all lower case characters except for
+// 'l' (0x6c) and 'o' (0x6f) and then all upper case characters except for 'I'
+// (0x49) and 'O' (0x4f).
+//
+// The Py3 Encoding is compatible with the Python-3 implementation and is
+// defined as the numerals 2-9 followed by all upper case characters except for
+// 'I' (0x49) and 'O' (0x4f) and then all lower case characters except for 'l'
+// (0x6c) and 'o' (0x6f).
+//
+// Note, the Alt and Py3 Encodings are identical except for the order of
+// character classes.  Alt is numerals->lowercase->uppercase while Py3 is
+// numerals->uppercase->lowercase.
+//
+// For reference, here are links to the known implementations for other
+// languages:
+//
+//     PHP....: http://rossduggan.ie/blog/codetry/base-56-integer-encoding-in-php/index.html
+//     Java...: ??
+//     Python.: https://github.com/jyn514/base56
+//
 package base56 // import "toolman.org/encoding/base56"
 
 import "errors"
 
-var chars = []byte("0123456789ABCEFGHJKLMNPRSTUVWXYZabcdefghjklmnpqrstuvwxyz")
-var srahc = map[rune]uint64{}
+var (
+	// Std is the standard character set traditionally used by this package.
+	Std = charSet("0123456789ABCEFGHJKLMNPRSTUVWXYZabcdefghjklmnpqrstuvwxyz")
 
-func init() {
-	for i, c := range chars {
-		srahc[rune(c)] = uint64(i)
-	}
-}
+	// Alt is an alternative character set used by PHP and Java implementations.
+	Alt = charSet("23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ")
 
-// ErrNotBase56 is returned by Decode if it is given an invalid base56 value.
+	// Py3 is the character set used by the Python base56 library.
+	Py3 = charSet("23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz")
+)
+
+// ErrNotBase56 is returned by Decode if it is provided an invalid base56 value
+// for the associated Encoding.
 var ErrNotBase56 = errors.New("invalid base56 value")
 
-// Decode takes a valid, base56 string -- as returned by Encode -- and returns
-// its uint64 value, or zero and ErrNotBase56 if the base56 string is invalid.
-// Valid base56 values are composed of digits in the range
-// [0-9ABCE-HJ-NPR-Za-hj-np-z] -- which is the numerals 0 through 9 plus all
-// upper and lower case ASCII letters except for [DIOQio].
+// Decode is a convenience wrapper around Std.Decode.
 func Decode(s string) (uint64, error) {
+	return Std.Decode(s)
+}
+
+// Encode is a convenience wrapper around Std.Encode.
+func Encode(i uint64) string {
+	return Std.Encode(i)
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Encoding represents a distinct base56 character set.
+type Encoding struct {
+	runes []rune
+	vmap  map[rune]uint64
+}
+
+// charSet is the unexported constructor for type Encoding. The provided
+// string should be composed of 56 unique characters in LSB to MSB order.
+// See the definitions of Std, Alt, and Py3 above.
+func charSet(s string) *Encoding {
+	e := &Encoding{runes: []rune(s), vmap: make(map[rune]uint64)}
+	for i, r := range e.runes {
+		e.vmap[r] = uint64(i)
+	}
+	return e
+}
+
+// Decode accepts a valid, base56 string -- as returned by Encode -- and
+// returns its uint64 value, or zero and ErrNotBase56 if the base56 string
+// is invalid.  Valid base56 values are composed of characters from the
+// receiver's defined character set.
+func (e *Encoding) Decode(s string) (uint64, error) {
 	var v uint64
 	p := uint64(1)
 
 	for i := len(s) - 1; i >= 0; i-- {
 		r := rune(s[i])
-		iv, ok := srahc[r]
+		iv, ok := e.vmap[r]
 		if !ok {
 			return 0, ErrNotBase56
 		}
@@ -65,14 +124,15 @@ func Decode(s string) (uint64, error) {
 	return v, nil
 }
 
-// Encode accepts a uint64 value and encodes it to a base56 string composed of
-// digits as described by Decode.
-func Encode(i uint64) string {
-	b := make([]byte, 0)
+// Encode accepts a uint64 value and encodes it to a base56 string composed
+// of characters from the receiver's defined character set.
+func (e *Encoding) Encode(i uint64) string {
+	var b []rune
+
 	for i > 0 {
 		r := i % 56
 		i = i / 56
-		b = append([]byte{chars[r]}, b...)
+		b = append([]rune{e.runes[r]}, b...)
 	}
 
 	return string(b)

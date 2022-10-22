@@ -1,57 +1,56 @@
 
-[![GoDoc](https://godoc.org/toolman.org/encoding/base56?status.svg)](https://godoc.org/toolman.org/encoding/base56)  [![Go Report Card](https://goreportcard.com/badge/toolman.org/encoding/base56)](https://goreportcard.com/report/toolman.org/encoding/base56) [![Build Status](https://travis-ci.org/tep/encoding-base56.svg?branch=master)](https://travis-ci.org/tep/encoding-base56)
 
-# base56
+# base56 [![MIT License][mit-img]][mit] [![GitHub Release][release-img]][release] [![GoDoc][godoc-img]][godoc] [![Go Report Card][reportcard-img]][reportcard]
+
 `import "toolman.org/encoding/base56"`
-
-* [Overview](#pkg-overview)
-* [Index](#pkg-index)
 
 ## Install
 
 ```sh
   go get toolman.org/encoding/base56
 ```
+## Overview
 
-## <a name="pkg-overview">Overview</a>
 Package base56 provides functions for encoding/decoding uint64 values as
-short, easily digestible, base56 strings.
+short, easily digestible, base56 strings. For example, the `Std` encoding
+transforms the `uint64` value `1540840132` into the string `"2nfvKM"`.
 
-The set of 56 digits are the numerals 0 - 9 plus all upper and lower case
-(ASCII) characters except for [DIOQio] (each of which may be easily confused
-with the numerals 0 or 1).
+For compatibility with other implementions, this package supports three
+separate and distinct base56 character sets through the package level,
+Encoding variables `Std`, `Alt` and `Py3`. Each of these Encodings leverage
+only 7-bit clean (ASCII) characters.
 
+The `Std` Encoding employs the original character set used by this package and
+is composed of the numerals 0-9 followed by all upper case characters except
+for 'D' (`0x44`), 'I' (`0x49`), 'O' (`0x4f`), and 'Q' (`0x51`) and then all
+lower case characters except for 'i' (`0x69`) and 'o' (`0x6f`).
 
+The `Alt` Encoding is compatible with PHP and Java implementations and is
+defined as the numerals 2-9 followed by all lower case characters except for
+'l' (`0x6c`) and 'o' (`0x6f`) and then all upper case characters except for 'I'
+(`0x49`) and 'O' (`0x4f`).
 
+The `Py3` Encoding is compatible with the Python-3 implementation and is
+defined as the numerals 2-9 followed by all upper case characters except for
+'I' (`0x49`) and 'O' (`0x4f`) and then all lower case characters except for 'l'
+(`0x6c`) and 'o' (`0x6f`).
 
-## <a name="pkg-index">Index</a>
-* [func Decode(s string) (uint64, error)](#Decode)
-* [func Encode(i uint64) string](#Encode)
-
-
-#### <a name="pkg-files">Package files</a>
-[base56.go](/src/toolman.org/encoding/base56/base56.go) 
-
-
-
-
-
-## <a name="Decode">func</a> [Decode](/src/target/base56.go?s=2013:2050#L37)
-``` go
-func Decode(s string) (uint64, error)
-```
-Decode takes a valid, base56 string -- as returned by Encode -- and returns
-its uint64 value, or zero and an error if the base56 string is invalid.
-Valid base56 values are composed of digits in the range
-[0-9ABCE-HJ-NPR-Za-hj-np-z] (which is all ASCII numerals, upper and lower
-case letters except for [DIOQio])
+Note, the `Alt` and `Py3` Encodings are identical except for the order of
+character classes.  `Alt` is numerals->lowercase->uppercase while `Py3` is
+numerals->uppercase->lowercase.
 
 
 
-## <a name="Encode">func</a> [Encode](/src/target/base56.go?s=2389:2417#L57)
-``` go
-func Encode(i uint64) string
-```
-Encode accepts a uint64 value and encodes it to a base56 string composed of
-digits as described by Decode.
+<!--- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --->
 
+[mit]:            https://github.com/tep/encoding-base56/blob/master/LICENSE
+[mit-img]:        http://img.shields.io/badge/License-MIT-c41e3a.svg
+
+[release]:        https://github.com/tep/encoding-base56/releases
+[release-img]:    https://img.shields.io/github/release/tep/encoding-base56/all.svg
+
+[godoc]:          https://godoc.org/toolman.org/encoding/base56
+[godoc-img]:      https://godoc.org/toolman.org/encoding/base56?status.svg
+
+[reportcard]:     https://goreportcard.com/report/toolman.org/encoding/base56
+[reportcard-img]: https://goreportcard.com/badge/toolman.org/encoding/base56
